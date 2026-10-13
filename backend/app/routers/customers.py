@@ -5,25 +5,43 @@ from app.database import get_db
 from app.models import Customer, CustomerNote, Order
 from app.schemas import (
     CustomerSummarySchema, CustomerDetailSchema, CustomerNoteSchema,
-    CustomerNoteCreate, OrderSchema
+    CustomerNoteCreate, OrderSchema, RFMSummarySchema
 )
 from app.services.crm_service import (
-    get_all_customers_summary, get_customer_360, export_customers_to_csv
+    get_all_customers_summary, get_customer_360, export_customers_to_csv,
+    get_rfm_summary
 )
 
 router = APIRouter(prefix="/api/customers", tags=["Customers"])
 
+@router.get("/rfm-summary", response_model=RFMSummarySchema)
+def get_customers_rfm_summary(db: Session = Depends(get_db)):
+    """
+    Returns store-wide RFM segment distribution, churn risk breakdown,
+    average customer health score, and revenue at risk.
+    """
+    return get_rfm_summary(db)
+
+
 @router.get("")
 def list_customers(
     search: Optional[str] = Query(None, description="Search by name, email, phone, city"),
-    segment: Optional[str] = Query(None, description="Filter by segment"),
-    sort_by: Optional[str] = Query("total_spent", description="total_spent, orders_count, name, last_order_date"),
+    segment: Optional[str] = Query(None, description="Filter by lifecycle segment"),
+    rfm_segment: Optional[str] = Query(None, description="Filter by RFM segment (Champions, Loyal Customers, Potential Loyalists, At Risk, Hibernating, New Leads)"),
+    churn_risk: Optional[str] = Query(None, description="Filter by churn risk (Low, Medium, High, Critical)"),
+    sort_by: Optional[str] = Query("total_spent", description="total_spent, orders_count, health_score, recency_days, name, last_order_date"),
     sort_order: Optional[str] = Query("desc", description="asc or desc"),
     export: Optional[str] = Query(None, description="Set to 'csv' for CSV export"),
     db: Session = Depends(get_db)
 ):
     customers = get_all_customers_summary(
-        db, search=search, segment=segment, sort_by=sort_by, sort_order=sort_order
+        db,
+        search=search,
+        segment=segment,
+        rfm_segment=rfm_segment,
+        churn_risk=churn_risk,
+        sort_by=sort_by,
+        sort_order=sort_order
     )
 
     if export == "csv":
@@ -43,6 +61,7 @@ def get_customer(customer_id: int, db: Session = Depends(get_db)):
     if not detail:
         raise HTTPException(status_code=404, detail=f"Customer #{customer_id} not found")
     return detail
+
 
 
 @router.get("/{customer_id}/orders", response_model=List[OrderSchema])

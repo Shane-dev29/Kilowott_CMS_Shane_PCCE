@@ -31,6 +31,7 @@ export const getCustomerDetail = (id) => api.get(`/customers/${id}`).then(res =>
 export const getCustomerOrders = (id) => api.get(`/customers/${id}/orders`).then(res => res.data);
 export const getCustomerNotes = (id) => api.get(`/customers/${id}/notes`).then(res => res.data);
 export const createCustomerNote = (id, data) => api.post(`/customers/${id}/notes`, data).then(res => res.data);
+export const getRfmSummary = () => api.get('/customers/rfm-summary').then(res => res.data);
 export const getCustomerExportUrl = (params = {}) => {
   const query = new URLSearchParams({ ...params, export: 'csv' }).toString();
   return `${API_BASE_URL}/customers?${query}`;
@@ -48,9 +49,10 @@ export const updateTask = (id, data) => api.patch(`/tasks/${id}`, data).then(res
 // WooCommerce Sync
 export const testWooConnection = () => api.post('/sync/test-connection').then(res => res.data);
 export const runSync = (mode = 'auto') => api.post(`/sync/run?mode=${mode}`).then(res => res.data);
+export const resetDemoDatabase = () => api.post('/sync/reset-demo').then(res => res.data);
 export const getSyncHistory = () => api.get('/sync/history').then(res => res.data);
 
-// AI Copilot — uses aiApi with extended timeout for local LLM
+// AI Copilot & Store Insights — uses aiApi with extended timeout
 export const sendChatMessage = (message, customerContextId = null, chatHistory = []) =>
   aiApi.post('/ai/chat', {
     message,
@@ -66,5 +68,8 @@ export const approveAction = (actionToken, approved, payload) =>
   }).then(res => res.data);
 
 export const getAiConfigStatus = () => api.get('/ai/config-status').then(res => res.data);
+export const getStoreInsights = () => aiApi.get('/ai/insights').then(res => res.data);
+export const refreshStoreInsights = () => aiApi.post('/ai/insights').then(res => res.data);
 
 export default api;
+

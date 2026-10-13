@@ -10,6 +10,7 @@ import { Orders } from './pages/Orders';
 import { Tasks } from './pages/Tasks';
 import { SyncCenter } from './pages/SyncCenter';
 import { CopilotPage } from './pages/CopilotPage';
+import { Insights } from './pages/Insights';
 import { Sparkles } from 'lucide-react';
 
 function AppLayout() {
@@ -29,6 +30,7 @@ function AppLayout() {
   const getPageMeta = () => {
     const path = location.pathname;
     if (path === '/') return { title: 'Overview Dashboard', subtitle: 'Real-time WooCommerce sales analytics and customer engagement' };
+    if (path === '/insights') return { title: 'AI Store Insights & Churn Radar', subtitle: 'Executive revenue telemetry, churn risk monitoring, and recovery actions' };
     if (path.startsWith('/customers/')) return { title: 'Customer 360 Profile', subtitle: 'Comprehensive customer metrics, purchase history, and notes' };
     if (path === '/customers') return { title: 'Customer Directory', subtitle: 'Manage, search, segment, and export WooCommerce customers' };
     if (path === '/orders') return { title: 'Orders Directory', subtitle: 'Track purchases, line items, and fulfillment statuses' };
@@ -60,6 +62,7 @@ function AppLayout() {
         <main className="flex-1 overflow-y-auto">
           <Routes>
             <Route path="/" element={<Dashboard onOpenCopilot={handleOpenCopilot} />} />
+            <Route path="/insights" element={<Insights onOpenCopilot={handleOpenCopilot} onOpenCopilotWithContext={handleOpenCopilotWithContext} />} />
             <Route path="/customers" element={<Customers onOpenCopilot={handleOpenCopilot} />} />
             <Route 
               path="/customers/:id" 

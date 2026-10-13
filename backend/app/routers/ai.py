@@ -72,8 +72,30 @@ def handle_action_approval(req: ActionApprovalRequest, db: Session = Depends(get
     events = []
 
     for t in tasks:
-        cid = t.get("customer_id")
-        title = t.get("title")
+        raw_cid = t.get("customer_id")
+        cid = None
+        if raw_cid is not None:
+            try:
+                cid = int(raw_cid)
+            except (ValueError, TypeError):
+                cid = None
+
+        if not cid:
+            c_email = t.get("customer_email") or t.get("email")
+            c_name = t.get("customer_name") or t.get("name")
+            if c_email:
+                cust = db.query(crm_tools.Customer).filter(crm_tools.Customer.email == c_email).first()
+                if cust:
+                    cid = cust.id
+            if not cid and c_name:
+                cust = db.query(crm_tools.Customer).filter(crm_tools.Customer.first_name.ilike(f"%{c_name}%")).first()
+                if cust:
+                    cid = cust.id
+            if not cid:
+                first_c = db.query(crm_tools.Customer).first()
+                cid = first_c.id if first_c else 1
+
+        title = t.get("title") or "Customer Engagement Follow-up"
         desc = t.get("description", "")
         prio = t.get("priority", "medium")
         due_days = t.get("due_days", 3)
@@ -95,6 +117,7 @@ def handle_action_approval(req: ActionApprovalRequest, db: Session = Depends(get
             created_by="AI Copilot (Approved)"
         )
 
+
         if res.get("success"):
             created_tasks.append(res)
             events[-1].status = "completed"
@@ -113,3 +136,15 @@ def handle_action_approval(req: ActionApprovalRequest, db: Session = Depends(get
         "created_tasks": created_tasks,
         "events": events
     }
+
+
+@router.get("/insights")
+@router.post("/insights")
+def get_store_insights(db: Session = Depends(get_db)):
+    """
+    Synthesizes executive store intelligence, revenue at risk, churn danger accounts,
+    and priority actions for store operators.
+    """
+    from app.services.crm_service import generate_store_insights
+    return generate_store_insights(db)
+

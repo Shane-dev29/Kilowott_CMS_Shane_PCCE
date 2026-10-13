@@ -9,12 +9,14 @@ import {
   Bot, 
   Sparkles,
   ExternalLink,
-  ShieldCheck
+  ShieldCheck,
+  Zap
 } from 'lucide-react';
 
 export const Sidebar = ({ onOpenCopilot, isDemoMode = true }) => {
   const navItems = [
     { to: '/', label: 'Overview', icon: LayoutDashboard },
+    { to: '/insights', label: 'Store Insights', icon: Zap },
     { to: '/customers', label: 'Customers', icon: Users },
     { to: '/orders', label: 'Orders', icon: ShoppingBag },
     { to: '/tasks', label: 'Follow-up Tasks', icon: CheckSquare },

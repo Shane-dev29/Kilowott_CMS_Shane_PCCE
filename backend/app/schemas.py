@@ -104,6 +104,10 @@ class CustomerSummarySchema(BaseModel):
     total_spent: float
     last_order_date: Optional[datetime] = None
     segment: str
+    rfm_segment: Optional[str] = "New Leads"
+    churn_risk: Optional[str] = "Low"
+    health_score: Optional[int] = 75
+    recency_days: Optional[int] = None
     custom_tags: Optional[str] = ""
     is_demo: bool
 
@@ -142,6 +146,11 @@ class CustomerDetailSchema(BaseModel):
     first_order_date: Optional[datetime] = None
     last_order_date: Optional[datetime] = None
     segment: str
+    rfm_segment: Optional[str] = "New Leads"
+    churn_risk: Optional[str] = "Low"
+    health_score: Optional[int] = 75
+    recency_days: Optional[int] = None
+    rfm_scores: Optional[Dict[str, Any]] = None
     
     # Relations
     orders: List[OrderSchema] = []
@@ -151,6 +160,16 @@ class CustomerDetailSchema(BaseModel):
 
     class Config:
         from_attributes = True
+
+# RFM & Store Intelligence Summary Schema
+class RFMSummarySchema(BaseModel):
+    total_customers: int
+    segments_distribution: Dict[str, int]
+    churn_risk_distribution: Dict[str, int]
+    average_health_score: float
+    revenue_at_risk: float
+    high_risk_customers: List[Dict[str, Any]]
+
 
 # Dashboard schemas
 class DashboardSummarySchema(BaseModel):

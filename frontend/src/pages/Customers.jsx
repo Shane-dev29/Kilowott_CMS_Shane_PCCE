@@ -12,26 +12,40 @@ import {
   MapPin, 
   ExternalLink,
   RefreshCw,
-  Tag
+  Tag,
+  ShieldAlert,
+  HeartPulse,
+  Award,
+  AlertTriangle
 } from 'lucide-react';
-import { getCustomers, getCustomerExportUrl } from '../api/client';
-import { SegmentBadge } from '../components/StatusBadge';
+import { getCustomers, getCustomerExportUrl, getRfmSummary } from '../api/client';
+import { SegmentBadge, RFMSegmentBadge, ChurnRiskBadge, HealthScoreBadge } from '../components/StatusBadge';
 
-const SEGMENTS = ['All', 'High-Value', 'Inactive', 'Returning', 'New', 'Lead'];
+const RFM_SEGMENTS = ['All', 'Champions', 'Loyal Customers', 'Potential Loyalists', 'At Risk', 'Hibernating', 'New Leads'];
+const LIFECYCLE_SEGMENTS = ['All', 'High-Value', 'Inactive', 'Returning', 'New', 'Lead'];
 
 export const Customers = ({ onOpenCopilot }) => {
   const [customers, setCustomers] = useState([]);
+  const [rfmSummary, setRfmSummary] = useState(null);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
-  const [selectedSegment, setSelectedSegment] = useState('All');
+  const [selectedRfmSegment, setSelectedRfmSegment] = useState('All');
+  const [selectedLifecycle, setSelectedLifecycle] = useState('All');
   const [sortBy, setSortBy] = useState('total_spent');
   const [sortOrder, setSortOrder] = useState('desc');
+
+  const fetchRfmSummary = () => {
+    getRfmSummary()
+      .then(res => setRfmSummary(res))
+      .catch(err => console.error('Error loading RFM summary:', err));
+  };
 
   const fetchCustomers = () => {
     setLoading(true);
     getCustomers({
       search: search || undefined,
-      segment: selectedSegment !== 'All' ? selectedSegment : undefined,
+      segment: selectedLifecycle !== 'All' ? selectedLifecycle : undefined,
+      rfm_segment: selectedRfmSegment !== 'All' ? selectedRfmSegment : undefined,
       sort_by: sortBy,
       sort_order: sortOrder
     })
@@ -41,16 +55,21 @@ export const Customers = ({ onOpenCopilot }) => {
   };
 
   useEffect(() => {
+    fetchRfmSummary();
+  }, []);
+
+  useEffect(() => {
     const timer = setTimeout(() => {
       fetchCustomers();
     }, 200);
     return () => clearTimeout(timer);
-  }, [search, selectedSegment, sortBy, sortOrder]);
+  }, [search, selectedRfmSegment, selectedLifecycle, sortBy, sortOrder]);
 
   const handleExportCSV = () => {
     const url = getCustomerExportUrl({
       search: search || undefined,
-      segment: selectedSegment !== 'All' ? selectedSegment : undefined,
+      segment: selectedLifecycle !== 'All' ? selectedLifecycle : undefined,
+      rfm_segment: selectedRfmSegment !== 'All' ? selectedRfmSegment : undefined,
       sort_by: sortBy,
       sort_order: sortOrder
     });
@@ -71,9 +90,9 @@ export const Customers = ({ onOpenCopilot }) => {
       {/* Top Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-xl font-bold text-slate-900 tracking-tight">Customer Management</h2>
+          <h2 className="text-xl font-bold text-slate-900 tracking-tight">Customer Management & RFM Intelligence</h2>
           <p className="text-xs text-slate-500 mt-1">
-            Explore customer spending, order frequency, lifecycle segments, and engagement history.
+            Recency, Frequency & Monetary segmentation, automated churn risk monitoring, and health metrics.
           </p>
         </div>
 
@@ -96,8 +115,69 @@ export const Customers = ({ onOpenCopilot }) => {
         </div>
       </div>
 
+      {/* RFM Intelligence Scoreboard Cards */}
+      {rfmSummary && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="bg-white rounded-xl border border-slate-200/80 p-4 shadow-xs flex items-center justify-between">
+            <div>
+              <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Average Customer Health</p>
+              <h3 className="text-xl font-bold text-slate-900 mt-0.5">{rfmSummary.average_health_score}/100</h3>
+              <p className="text-[11px] text-emerald-600 font-medium mt-0.5 flex items-center">
+                <span>Weighted recency & cadence</span>
+              </p>
+            </div>
+            <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0 border border-emerald-100">
+              <HeartPulse className="w-5 h-5" />
+            </div>
+          </div>
+
+          <div className="bg-white rounded-xl border border-slate-200/80 p-4 shadow-xs flex items-center justify-between">
+            <div>
+              <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Revenue at Risk</p>
+              <h3 className="text-xl font-bold text-rose-600 mt-0.5">₹{rfmSummary.revenue_at_risk.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</h3>
+              <p className="text-[11px] text-rose-500 font-medium mt-0.5">
+                Critical & High churn danger
+              </p>
+            </div>
+            <div className="w-10 h-10 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center shrink-0 border border-rose-100">
+              <ShieldAlert className="w-5 h-5" />
+            </div>
+          </div>
+
+          <div className="bg-white rounded-xl border border-slate-200/80 p-4 shadow-xs flex items-center justify-between">
+            <div>
+              <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Champions & Loyal</p>
+              <h3 className="text-xl font-bold text-slate-900 mt-0.5">
+                {(rfmSummary.segments_distribution?.['Champions'] || 0) + (rfmSummary.segments_distribution?.['Loyal Customers'] || 0)} Accounts
+              </h3>
+              <p className="text-[11px] text-indigo-600 font-medium mt-0.5">
+                Top spenders with high recency
+              </p>
+            </div>
+            <div className="w-10 h-10 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0 border border-indigo-100">
+              <Award className="w-5 h-5" />
+            </div>
+          </div>
+
+          <div className="bg-white rounded-xl border border-slate-200/80 p-4 shadow-xs flex items-center justify-between">
+            <div>
+              <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">At-Risk & Hibernating</p>
+              <h3 className="text-xl font-bold text-amber-600 mt-0.5">
+                {(rfmSummary.segments_distribution?.['At Risk'] || 0) + (rfmSummary.segments_distribution?.['Hibernating'] || 0)} Accounts
+              </h3>
+              <p className="text-[11px] text-amber-600 font-medium mt-0.5">
+                Require win-back re-engagement
+              </p>
+            </div>
+            <div className="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center shrink-0 border border-amber-100">
+              <AlertTriangle className="w-5 h-5" />
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Filters and Search Bar */}
-      <div className="bg-white rounded-xl border border-slate-200/80 p-4 shadow-xs space-y-3">
+      <div className="bg-white rounded-xl border border-slate-200/80 p-4 shadow-xs space-y-3.5">
         <div className="flex flex-col md:flex-row items-center justify-between gap-3">
           {/* Search Box */}
           <div className="relative w-full md:w-80">
@@ -120,13 +200,15 @@ export const Customers = ({ onOpenCopilot }) => {
               className="bg-slate-50 border border-slate-200 text-xs font-medium text-slate-700 rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-indigo-500"
             >
               <option value="total_spent">Total Spent</option>
+              <option value="health_score">Customer Health Score</option>
               <option value="orders_count">Order Count</option>
+              <option value="recency_days">Purchase Recency</option>
               <option value="name">Name</option>
               <option value="last_order_date">Last Purchase Date</option>
             </select>
             <button
               onClick={() => setSortOrder(prev => (prev === 'asc' ? 'desc' : 'asc'))}
-              className="p-1.5 border border-slate-200 rounded-lg bg-slate-50 hover:bg-slate-100 text-slate-600 text-xs"
+              className="p-1.5 border border-slate-200 rounded-lg bg-slate-50 hover:bg-slate-100 text-slate-600 text-xs cursor-pointer"
               title={`Order: ${sortOrder.toUpperCase()}`}
             >
               <ArrowUpDown className="w-3.5 h-3.5" />
@@ -134,19 +216,39 @@ export const Customers = ({ onOpenCopilot }) => {
           </div>
         </div>
 
-        {/* Segment Filter Pills */}
+        {/* RFM Segment Filter Pills */}
         <div className="flex items-center space-x-1.5 overflow-x-auto pt-1 pb-0.5">
-          <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider mr-1 text-[10px]">
-            Segment:
+          <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider mr-1 text-[10px] shrink-0">
+            RFM Segment:
           </span>
-          {SEGMENTS.map((seg) => (
+          {RFM_SEGMENTS.map((seg) => (
             <button
               key={seg}
-              onClick={() => setSelectedSegment(seg)}
-              className={`px-3 py-1 rounded-full text-xs font-medium transition-all cursor-pointer ${
-                selectedSegment === seg
+              onClick={() => setSelectedRfmSegment(seg)}
+              className={`px-3 py-1 rounded-full text-xs font-medium transition-all cursor-pointer shrink-0 ${
+                selectedRfmSegment === seg
                   ? 'bg-indigo-600 text-white shadow-xs font-semibold'
                   : 'bg-slate-100 text-slate-600 hover:bg-slate-200/80'
+              }`}
+            >
+              {seg}
+            </button>
+          ))}
+        </div>
+
+        {/* Lifecycle Pills */}
+        <div className="flex items-center space-x-1.5 overflow-x-auto pt-0.5 text-[11px] border-t border-slate-100 pt-2">
+          <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider mr-1 text-[10px] shrink-0">
+            Lifecycle:
+          </span>
+          {LIFECYCLE_SEGMENTS.map((seg) => (
+            <button
+              key={seg}
+              onClick={() => setSelectedLifecycle(seg)}
+              className={`px-2.5 py-0.5 rounded-md text-[11px] font-medium transition-all cursor-pointer shrink-0 ${
+                selectedLifecycle === seg
+                  ? 'bg-slate-800 text-white font-semibold'
+                  : 'bg-slate-50 text-slate-500 hover:bg-slate-100'
               }`}
             >
               {seg}
@@ -163,7 +265,17 @@ export const Customers = ({ onOpenCopilot }) => {
               <tr>
                 <th className="px-5 py-3.5">Customer</th>
                 <th className="px-5 py-3.5">Contact & Location</th>
-                <th className="px-5 py-3.5">Segment</th>
+                <th className="px-5 py-3.5">RFM Segment</th>
+                <th 
+                  className="px-5 py-3.5 cursor-pointer hover:text-slate-800"
+                  onClick={() => handleSortToggle('health_score')}
+                >
+                  <div className="flex items-center space-x-1">
+                    <span>Health Score</span>
+                    <ArrowUpDown className="w-3 h-3 text-slate-400" />
+                  </div>
+                </th>
+                <th className="px-5 py-3.5">Churn Risk</th>
                 <th 
                   className="px-5 py-3.5 cursor-pointer hover:text-slate-800"
                   onClick={() => handleSortToggle('orders_count')}
@@ -197,14 +309,14 @@ export const Customers = ({ onOpenCopilot }) => {
             <tbody className="divide-y divide-slate-100">
               {loading ? (
                 <tr>
-                  <td colSpan="7" className="px-5 py-12 text-center text-slate-400">
+                  <td colSpan="9" className="px-5 py-12 text-center text-slate-400">
                     <RefreshCw className="w-6 h-6 animate-spin mx-auto mb-2 text-indigo-500" />
-                    <span>Loading customers...</span>
+                    <span>Loading customer profiles & RFM scores...</span>
                   </td>
                 </tr>
               ) : customers.length === 0 ? (
                 <tr>
-                  <td colSpan="7" className="px-5 py-12 text-center text-slate-500">
+                  <td colSpan="9" className="px-5 py-12 text-center text-slate-500">
                     <p className="font-semibold text-sm">No customers match your criteria</p>
                     <p className="text-xs text-slate-400 mt-1">Try resetting search or segment filter.</p>
                   </td>
@@ -257,9 +369,19 @@ export const Customers = ({ onOpenCopilot }) => {
                       </div>
                     </td>
 
-                    {/* Segment Badge */}
+                    {/* RFM Segment Badge */}
                     <td className="px-5 py-3.5">
-                      <SegmentBadge segment={c.segment} />
+                      <RFMSegmentBadge segment={c.rfm_segment || 'New Leads'} />
+                    </td>
+
+                    {/* Health Score */}
+                    <td className="px-5 py-3.5">
+                      <HealthScoreBadge score={c.health_score} />
+                    </td>
+
+                    {/* Churn Risk Badge */}
+                    <td className="px-5 py-3.5">
+                      <ChurnRiskBadge risk={c.churn_risk} />
                     </td>
 
                     {/* Orders count */}
@@ -280,7 +402,7 @@ export const Customers = ({ onOpenCopilot }) => {
                             {new Date(c.last_order_date).toLocaleDateString()}
                           </span>
                           <span className="text-[10px] text-slate-400 block">
-                            {Math.round((new Date() - new Date(c.last_order_date)) / (1000 * 60 * 60 * 24))} days ago
+                            {c.recency_days !== null && c.recency_days !== undefined ? `${c.recency_days}d ago` : ''}
                           </span>
                         </div>
                       ) : (
@@ -308,7 +430,7 @@ export const Customers = ({ onOpenCopilot }) => {
         {/* Table Footer */}
         <div className="px-5 py-3 bg-slate-50 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
           <span>Showing {customers.length} customer records</span>
-          <span className="text-[11px] text-slate-400">Segments auto-calculated from live order history</span>
+          <span className="text-[11px] text-slate-400">RFM segments and health scores calculated from order recency & volume</span>
         </div>
       </div>
     </div>

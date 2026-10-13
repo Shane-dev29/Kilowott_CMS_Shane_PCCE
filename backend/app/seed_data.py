@@ -7,6 +7,15 @@ def seed_database(db: Session, force: bool = False):
     if existing_customers > 0 and not force:
         return
 
+    if force:
+        db.query(OrderItem).delete()
+        db.query(Order).delete()
+        db.query(FollowUpTask).delete()
+        db.query(CustomerNote).delete()
+        db.query(Customer).delete()
+        db.query(SyncLog).delete()
+        db.commit()
+
     now = datetime.utcnow()
     
     # 1. Seed realistic customers
@@ -197,6 +206,66 @@ def seed_database(db: Session, force: bool = False):
             "custom_tags": "Lead, Cart Abandoner",
             "is_demo": True,
             "created_at": now - timedelta(days=40)
+        },
+        {
+            "woo_id": 113,
+            "first_name": "Tanya",
+            "last_name": "Kapoor",
+            "email": "tanya.kapoor@example.com",
+            "phone": "+91 98118 77665",
+            "address_line1": "Penthouse 9, Oberoi Sky Heights, Andheri West",
+            "city": "Mumbai",
+            "state": "Maharashtra",
+            "country": "IN",
+            "postcode": "400053",
+            "custom_tags": "VIP, Critical Churn Risk",
+            "is_demo": True,
+            "created_at": now - timedelta(days=260)
+        },
+        {
+            "woo_id": 114,
+            "first_name": "Aditya",
+            "last_name": "Joshi",
+            "email": "aditya.joshi@example.com",
+            "phone": "+91 99203 44556",
+            "address_line1": "Flat 301, Silver Oak, Viman Nagar",
+            "city": "Pune",
+            "state": "Maharashtra",
+            "country": "IN",
+            "postcode": "411014",
+            "custom_tags": "Payment Dropout, Attention Needed",
+            "is_demo": True,
+            "created_at": now - timedelta(days=10)
+        },
+        {
+            "woo_id": 115,
+            "first_name": "Neha",
+            "last_name": "Singhania",
+            "email": "neha.singhania@example.com",
+            "phone": "+91 98765 43210",
+            "address_line1": "8/4 Alipore Road",
+            "city": "Kolkata",
+            "state": "West Bengal",
+            "country": "IN",
+            "postcode": "700027",
+            "custom_tags": "Payment On-Hold, Verification Pending",
+            "is_demo": True,
+            "created_at": now - timedelta(days=20)
+        },
+        {
+            "woo_id": 116,
+            "first_name": "Kavita",
+            "last_name": "Roy",
+            "email": "kavita.roy@example.com",
+            "phone": "+91 94330 12389",
+            "address_line1": "52 Indiranagar 100ft Road",
+            "city": "Bengaluru",
+            "state": "Karnataka",
+            "country": "IN",
+            "postcode": "560038",
+            "custom_tags": "Refund Disputed, High Returns",
+            "is_demo": True,
+            "created_at": now - timedelta(days=130)
         }
     ]
 
@@ -603,6 +672,151 @@ def seed_database(db: Session, force: bool = False):
             "items": [
                 {"product_name": "Premium Merino Wool Hoodie", "quantity": 1, "unit_price": 6400.0, "total_price": 6400.0, "sku": "HOD-MERINO-01"}
             ]
+        },
+
+        # Tanya Kapoor (113) - Critical VIP Churn Case: Spent ₹64,500, but inactive for >130 days!
+        {
+            "customer": c_map["tanya.kapoor@example.com"],
+            "order_number": "WC-1024",
+            "woo_id": 5024,
+            "status": "completed",
+            "total": 24999.0,
+            "subtotal": 21185.0,
+            "tax_total": 3814.0,
+            "shipping_total": 0.0,
+            "date_created": now - timedelta(days=240),
+            "payment_method": "Credit Card (HDFC)",
+            "items": [
+                {"product_name": "UltraWide Curved 34-inch Monitor", "quantity": 1, "unit_price": 24999.0, "total_price": 24999.0, "sku": "DISP-UW34"}
+            ]
+        },
+        {
+            "customer": c_map["tanya.kapoor@example.com"],
+            "order_number": "WC-1025",
+            "woo_id": 5025,
+            "status": "completed",
+            "total": 18500.0,
+            "subtotal": 15678.0,
+            "tax_total": 2822.0,
+            "shipping_total": 0.0,
+            "date_created": now - timedelta(days=190),
+            "payment_method": "Credit Card (HDFC)",
+            "items": [
+                {"product_name": "Mechanical Studio Keyboard - Custom Brass", "quantity": 1, "unit_price": 18500.0, "total_price": 18500.0, "sku": "KB-BRASS-PRO"}
+            ]
+        },
+        {
+            "customer": c_map["tanya.kapoor@example.com"],
+            "order_number": "WC-1026",
+            "woo_id": 5026,
+            "status": "completed",
+            "total": 21000.0,
+            "subtotal": 17796.0,
+            "tax_total": 3204.0,
+            "shipping_total": 0.0,
+            "date_created": now - timedelta(days=135),
+            "payment_method": "Razorpay / UPI",
+            "items": [
+                {"product_name": "Solid Walnut Standing Desk Top", "quantity": 1, "unit_price": 21000.0, "total_price": 21000.0, "sku": "DESK-WALNUT-60"}
+            ]
+        },
+
+        # Aditya Joshi (114) - Payment Failed Dropout (Immediate recovery candidate)
+        {
+            "customer": c_map["aditya.joshi@example.com"],
+            "order_number": "WC-1027",
+            "woo_id": 5027,
+            "status": "failed",
+            "total": 18500.0,
+            "subtotal": 15678.0,
+            "tax_total": 2822.0,
+            "shipping_total": 0.0,
+            "date_created": now - timedelta(days=2),
+            "payment_method": "Card Declined (3DS Timeout / Gateway Error)",
+            "items": [
+                {"product_name": "De'Longhi Dedica Espresso Machine", "quantity": 1, "unit_price": 18500.0, "total_price": 18500.0, "sku": "ESP-DEDICA-01"}
+            ]
+        },
+
+        # Neha Singhania (115) - Stalled On-Hold Payment (Awaiting manual verification >4 days)
+        {
+            "customer": c_map["neha.singhania@example.com"],
+            "order_number": "WC-1028",
+            "woo_id": 5028,
+            "status": "on-hold",
+            "total": 22900.0,
+            "subtotal": 19406.0,
+            "tax_total": 3494.0,
+            "shipping_total": 0.0,
+            "date_created": now - timedelta(days=4),
+            "payment_method": "Direct Bank Transfer (Awaiting UTR Reference)",
+            "items": [
+                {"product_name": "Ergonomic High-Back Executive Chair", "quantity": 1, "unit_price": 22900.0, "total_price": 22900.0, "sku": "CHR-ERGO-HIGH"}
+            ]
+        },
+
+        # Kavita Roy (116) - Disputed Returns & Cancelled Order
+        {
+            "customer": c_map["kavita.roy@example.com"],
+            "order_number": "WC-1029",
+            "woo_id": 5029,
+            "status": "completed",
+            "total": 4200.0,
+            "subtotal": 3559.0,
+            "tax_total": 641.0,
+            "shipping_total": 0.0,
+            "date_created": now - timedelta(days=125),
+            "payment_method": "UPI",
+            "items": [
+                {"product_name": "Acoustic Desktop Isolation Pads (Pair)", "quantity": 1, "unit_price": 4200.0, "total_price": 4200.0, "sku": "PAD-ACOU-PR"}
+            ]
+        },
+        {
+            "customer": c_map["kavita.roy@example.com"],
+            "order_number": "WC-1030",
+            "woo_id": 5030,
+            "status": "refunded",
+            "total": 8900.0,
+            "subtotal": 7542.0,
+            "tax_total": 1358.0,
+            "shipping_total": 0.0,
+            "date_created": now - timedelta(days=45),
+            "payment_method": "Razorpay / Card",
+            "items": [
+                {"product_name": "Studio Reference Headphones (Mic Defect Reported)", "quantity": 1, "unit_price": 8900.0, "total_price": 8900.0, "sku": "AUD-REF-80"}
+            ]
+        },
+        {
+            "customer": c_map["kavita.roy@example.com"],
+            "order_number": "WC-1031",
+            "woo_id": 5031,
+            "status": "cancelled",
+            "total": 3500.0,
+            "subtotal": 2966.0,
+            "tax_total": 534.0,
+            "shipping_total": 0.0,
+            "date_created": now - timedelta(days=15),
+            "payment_method": "Cash on Delivery",
+            "items": [
+                {"product_name": "Braided Heavy-Duty Audio Cable Set", "quantity": 1, "unit_price": 3500.0, "total_price": 3500.0, "sku": "CBL-BRD-SET"}
+            ]
+        },
+
+        # Kabir Sen (107) - Pending Payment Order (36 hours overdue UPI)
+        {
+            "customer": c_map["kabir.sen@example.com"],
+            "order_number": "WC-1032",
+            "woo_id": 5032,
+            "status": "pending",
+            "total": 4999.0,
+            "subtotal": 4236.0,
+            "tax_total": 763.0,
+            "shipping_total": 0.0,
+            "date_created": now - timedelta(hours=36),
+            "payment_method": "UPI QR Code (Payment Pending)",
+            "items": [
+                {"product_name": "Anker 100W GaN Fast Charger", "quantity": 1, "unit_price": 4999.0, "total_price": 4999.0, "sku": "CHG-ANK-100W"}
+            ]
         }
     ]
 
@@ -673,6 +887,30 @@ def seed_database(db: Session, force: bool = False):
             "content": "Very satisfied with cashmere wrap quality. Left a 5-star review on store.",
             "created_by": "Customer Success",
             "created_at": now - timedelta(days=40)
+        },
+        {
+            "customer": c_map["tanya.kapoor@example.com"],
+            "content": "VIP Account Alert: Historical spend of ₹64,500 across 4 premium orders. Inactive for over 130 days. High churn danger. Needs proactive executive re-engagement.",
+            "created_by": "CRM Intelligence",
+            "created_at": now - timedelta(days=10)
+        },
+        {
+            "customer": c_map["aditya.joshi@example.com"],
+            "content": "Checkout Abandonment / Payment Failure: Order WC-1027 failed at HDFC 3DS payment gateway. Cart value is ₹18,500. Initiated payment recovery email.",
+            "created_by": "System Event",
+            "created_at": now - timedelta(days=2)
+        },
+        {
+            "customer": c_map["neha.singhania@example.com"],
+            "content": "Payment On-Hold: High-value order WC-1028 (₹22,900) placed via Direct Bank Transfer. 4 days elapsed without UTR confirmation from accounts.",
+            "created_by": "Finance Ops",
+            "created_at": now - timedelta(days=3)
+        },
+        {
+            "customer": c_map["kavita.roy@example.com"],
+            "content": "Refund processed for WC-1030 (₹8,900) due to microphone hardware defect reported in Studio Headphones. Order WC-1031 subsequently cancelled.",
+            "created_by": "Support Lead",
+            "created_at": now - timedelta(days=14)
         }
     ]
 
@@ -727,6 +965,46 @@ def seed_database(db: Session, force: bool = False):
             "completed_at": now - timedelta(days=4),
             "created_by": "Support Lead",
             "created_at": now - timedelta(days=10)
+        },
+        {
+            "customer": c_map["aditya.joshi@example.com"],
+            "title": "Recover failed payment: Aditya Joshi (₹18,500 Espresso Machine)",
+            "description": "HDFC gateway failed. Send recovery WhatsApp/email with direct UPI payment link to rescue transaction.",
+            "priority": "urgent",
+            "due_date": now + timedelta(hours=6),
+            "status": "pending",
+            "created_by": "Payment Recovery Bot",
+            "created_at": now - timedelta(days=1)
+        },
+        {
+            "customer": c_map["neha.singhania@example.com"],
+            "title": "Verify NEFT Bank Transfer UTR for WC-1028 (₹22,900)",
+            "description": "Call customer or check corporate bank statement for incoming NEFT credit before order cancellation.",
+            "priority": "high",
+            "due_date": now + timedelta(days=1),
+            "status": "pending",
+            "created_by": "Finance Ops",
+            "created_at": now - timedelta(days=2)
+        },
+        {
+            "customer": c_map["tanya.kapoor@example.com"],
+            "title": "VIP Win-back campaign: Tanya Kapoor (₹64,500 spend, inactive 130d)",
+            "description": "Generate custom AI win-back offer with concierge perk and 20% discount on standing desk accessories.",
+            "priority": "high",
+            "due_date": now + timedelta(days=2),
+            "status": "pending",
+            "created_by": "AI Copilot",
+            "created_at": now - timedelta(days=3)
+        },
+        {
+            "customer": c_map["kavita.roy@example.com"],
+            "title": "Goodwill outreach & store credit voucher for defective headphones",
+            "description": "Check in following microphone defect refund (WC-1030). Offer ₹1,000 goodwill credit to rebuild trust.",
+            "priority": "medium",
+            "due_date": now + timedelta(days=3),
+            "status": "pending",
+            "created_by": "Customer Success",
+            "created_at": now - timedelta(days=5)
         }
     ]
 
@@ -750,10 +1028,10 @@ def seed_database(db: Session, force: bool = False):
         finished_at=now - timedelta(hours=1, seconds=-4),
         status="success",
         is_demo_sync=True,
-        customers_synced=12,
-        orders_synced=18,
+        customers_synced=16,
+        orders_synced=27,
         error_message=None,
-        details="Demo store dataset loaded successfully with 12 customers, 18 orders, and 23 items."
+        details="Demo store dataset loaded successfully with 16 customers, 27 orders (including edge cases: failed checkout, stalled on-hold payments, refunded orders, and churning VIPs)."
     )
     db.add(sync_log)
 

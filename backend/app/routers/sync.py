@@ -48,3 +48,15 @@ async def run_sync(
 def get_sync_history(db: Session = Depends(get_db)):
     logs = db.query(SyncLog).order_by(SyncLog.started_at.desc()).limit(20).all()
     return logs
+
+
+@router.post("/reset-demo")
+def reset_demo_database(db: Session = Depends(get_db)):
+    from app.seed_data import seed_database
+    seed_database(db, force=True)
+    cust_count = db.query(SyncLog).first().customers_synced if db.query(SyncLog).first() else 16
+    return {
+        "success": True,
+        "message": "Demo database successfully reset with updated edge-case datasets (failed checkouts, on-hold payments, churning VIPs, and returns).",
+        "customers_count": cust_count
+    }

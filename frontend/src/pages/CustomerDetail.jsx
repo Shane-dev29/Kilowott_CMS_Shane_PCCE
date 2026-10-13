@@ -20,8 +20,9 @@ import {
   UserCheck
 } from 'lucide-react';
 import { getCustomerDetail, createCustomerNote, createTask, updateTask } from '../api/client';
-import { SegmentBadge, OrderStatusBadge, PriorityBadge } from '../components/StatusBadge';
+import { SegmentBadge, OrderStatusBadge, PriorityBadge, RFMSegmentBadge, ChurnRiskBadge, HealthScoreBadge } from '../components/StatusBadge';
 import { MetricCard } from '../components/MetricCard';
+import { HeartPulse, ShieldAlert, Award, Activity } from 'lucide-react';
 
 export const CustomerDetail = ({ onOpenCopilotWithContext }) => {
   const { id } = useParams();
@@ -130,6 +131,8 @@ export const CustomerDetail = ({ onOpenCopilotWithContext }) => {
     );
   }
 
+  const isChurnDanger = customer.churn_risk === 'Critical' || customer.churn_risk === 'High';
+
   return (
     <div className="p-8 space-y-6 max-w-7xl mx-auto">
       {/* Back button & Breadcrumb */}
@@ -142,6 +145,38 @@ export const CustomerDetail = ({ onOpenCopilotWithContext }) => {
         <span className="font-semibold text-slate-900">{customer.full_name}</span>
       </div>
 
+      {/* Churn Risk Proactive Banner */}
+      {isChurnDanger && (
+        <div className="bg-gradient-to-r from-rose-50 to-amber-50 border border-rose-200 rounded-2xl p-4 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="flex items-center space-x-3.5">
+            <div className="w-10 h-10 rounded-xl bg-rose-600 text-white flex items-center justify-center shrink-0 shadow-xs">
+              <ShieldAlert className="w-5 h-5 animate-pulse" />
+            </div>
+            <div>
+              <div className="flex items-center space-x-2">
+                <span className="text-xs font-bold uppercase tracking-wider text-rose-700 bg-rose-100 px-2 py-0.5 rounded">
+                  {customer.churn_risk} Churn Danger
+                </span>
+                <span className="text-xs font-semibold text-slate-700">
+                  Inactive for {customer.recency_days} days
+                </span>
+              </div>
+              <p className="text-xs text-slate-600 mt-0.5">
+                Lifetime spend of ₹{customer.total_spent.toLocaleString('en-IN', { minimumFractionDigits: 2 })} across {customer.orders_count} orders is at risk of churn. Proactive executive win-back recommended.
+              </p>
+            </div>
+          </div>
+
+          <button
+            onClick={() => onOpenCopilotWithContext(customer)}
+            className="flex items-center space-x-1.5 px-3.5 py-2 bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold rounded-lg shadow-xs transition-all cursor-pointer shrink-0"
+          >
+            <Sparkles className="w-3.5 h-3.5" />
+            <span>Draft AI Win-Back Outreach</span>
+          </button>
+        </div>
+      )}
+
       {/* Profile Header Card */}
       <div className="bg-white rounded-2xl border border-slate-200/80 p-6 shadow-xs flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
         <div className="flex items-start space-x-4">
@@ -152,6 +187,7 @@ export const CustomerDetail = ({ onOpenCopilotWithContext }) => {
             <div className="flex items-center space-x-3">
               <h1 className="text-xl font-bold text-slate-900 tracking-tight">{customer.full_name}</h1>
               <SegmentBadge segment={customer.segment} />
+              <RFMSegmentBadge segment={customer.rfm_segment || 'New Leads'} />
               {customer.is_demo && (
                 <span className="text-[10px] font-semibold px-2 py-0.5 rounded bg-slate-100 text-slate-600 border border-slate-200">
                   Demo
@@ -200,6 +236,54 @@ export const CustomerDetail = ({ onOpenCopilotWithContext }) => {
           </button>
         </div>
       </div>
+
+      {/* RFM Intelligence & Customer Health Card */}
+      <div className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-xs">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+          <div className="space-y-1">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Behavioral Intelligence</span>
+            <h3 className="text-sm font-bold text-slate-900">RFM Customer Health Profile</h3>
+            <p className="text-xs text-slate-500">
+              Evaluated based on days since last order, purchase frequency, total volume, and operational issues.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 shrink-0">
+            {/* Health Score */}
+            <div className="bg-slate-50 border border-slate-200/70 rounded-xl p-3">
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Health Score</span>
+              <div className="mt-1">
+                <HealthScoreBadge score={customer.health_score} />
+              </div>
+            </div>
+
+            {/* Churn Risk */}
+            <div className="bg-slate-50 border border-slate-200/70 rounded-xl p-3">
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Churn Risk</span>
+              <div className="mt-1">
+                <ChurnRiskBadge risk={customer.churn_risk} />
+              </div>
+            </div>
+
+            {/* Recency */}
+            <div className="bg-slate-50 border border-slate-200/70 rounded-xl p-3">
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Recency (R)</span>
+              <span className="text-xs font-bold text-slate-800 mt-1 block">
+                {customer.recency_days !== null && customer.recency_days !== undefined ? `${customer.recency_days} days` : 'No Orders'}
+              </span>
+            </div>
+
+            {/* Monetary / Frequency */}
+            <div className="bg-slate-50 border border-slate-200/70 rounded-xl p-3">
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">RFM Category</span>
+              <span className="text-xs font-bold text-indigo-700 mt-1 block">
+                {customer.rfm_segment || 'New Leads'}
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+
 
       {/* Metrics Row */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
