@@ -1,76 +1,105 @@
-# Customer 360 — Agentic AI-Powered WooCommerce CRM
+# Customer 360 — Privacy-First Agentic AI WooCommerce CRM
 
-A full-stack, standalone WooCommerce CRM that enables businesses to manage customers, analyze purchasing behavior, organize customer engagement, and use an **AI Copilot** orchestrated with **LangGraph** to inspect CRM data and execute approved actions.
+A full-stack, standalone WooCommerce CRM that enables businesses to manage customers, analyze purchasing behavior, organize customer engagement, and use an **Agentic AI Copilot** orchestrated with **LangGraph** to inspect CRM data and execute approved actions.
+
+Featuring an **On-Premise / Local LLM architecture** (Ollama + Qwen 2.5) for complete client data privacy, mathematical **RFM segmentation**, dynamic **churn prediction**, a dedicated **Payment Recovery Hub**, and an **AI Store Insights & Churn Radar** dashboard.
 
 Built for the Kilowott Software Engineering Challenge.
 
 ---
 
-## 🚀 Key Features
+## 🚀 Key Features Across the 5-Phase Architecture
 
-### 1. Overview Dashboard
-- **Real-time KPI Metrics**: Total Customers, Total Orders, Valid Revenue, Average Order Value (AOV), Returning Customer Rate (%), and Pending Follow-up Tasks.
-- **Accurate Revenue Calculation**: Excludes failed, cancelled, and refunded orders.
-- **Interactive Visualizations**:
-  - Revenue trends over the past 6 months using Recharts Area Chart with Indian Rupee (₹) formatting.
-  - Order status distribution using Recharts Donut Chart.
-- **Recent Orders & Unified Activity Feed**: Live stream of recent customer orders, internal CRM notes, and follow-up tasks.
+```
+                      ┌────────────────────────────────────────┐
+                      │          Local SQLite (crm.db)         │
+                      └──────────────────┬─────────────────────┘
+                                         │
+                 ┌───────────────────────┴───────────────────────┐
+                 ▼                                               ▼
+    [CRM Intelligence Engine]                       [Edge-Case Seed Engine]
+    - RFM Scoring (Recency, Frequency, Monetary)    - Failed 3DS checkout dropouts
+    - Churn Risk Engine (Low/Med/High/Critical)     - Stalled NEFT / on-hold bank wires
+    - Customer Health Score (0-100)                 - Churning VIP accounts (>130d inactive)
+    - Revenue at Risk Telemetry                     - Disputed returns & cancelled orders
+                 │                                               │
+                 └───────────────────────┬───────────────────────┘
+                                         │
+        ┌────────────────────────────────┼────────────────────────────────┐
+        ▼                                ▼                                ▼
+[Customers & 360 Profile]        [Orders & Recovery]             [AI Store Insights]
+- RFM Segment Filter Tabs        - "Payment Attention" Filter    - Executive Revenue Telemetry
+- Health Score Progress Bars     - Overdue Age Tracking          - Revenue at Risk KPI
+- Proactive Churn Danger Banner  - 1-Click "Recover Payment"     - 1-Click Operational Actions
+- 1-Click AI Win-Back Outreach   - Automated Recovery Tasks      - AI Executive Strategic Brief
+```
 
-### 2. Customer Management & Segmentation
-- **Customer Directory**: Name, email, phone, city, total spent, order count, and last purchase date.
-- **Dynamic Rule-Based Segmentation**:
-  - **High-Value**: Total spend $\ge$ ₹15,000.
-  - **Inactive**: Purchased previously, but no orders in the last 60 days.
-  - **Returning**: Placed $\ge 2$ valid orders.
-  - **New**: 1 purchase within the last 30 days.
-  - **Lead**: Signed up with 0 purchases.
-- **Search & Multi-field Sorting**: Search by name, email, phone, or location. Sort by total spent, order frequency, name, or last purchase date.
-- **One-Click CSV Export**: Instant export of filtered and sorted customer results.
+---
 
-### 3. Customer 360 Profile
-- **Comprehensive Profile**: Contact info, lifecycle segment, customer tags, and address.
-- **Individual KPIs**: Lifetime spent, order count, AOV, first order date, and days since last purchase.
-- **Unified Activity Timeline**: Chronological aggregation of purchases, agent notes, and completed tasks.
-- **Internal Notes**: Create and persist timestamped internal notes with author attribution.
-- **Follow-up Tasks**: Assign prioritized tasks with due dates directly to the customer.
-- **Context-Aware AI Copilot**: "Ask Copilot about this customer" opens the Copilot drawer with the customer preset in context.
+### 1. AI Store Insights & Churn Radar (Executive Dashboard)
+- **Revenue at Risk Telemetry**: Aggregates stalled checkouts and high-risk customer relationship volume.
+- **Recovery Opportunity Pipeline**: Calculates immediate recoverable capital from checkout dropouts.
+- **Storewide Customer Health Score**: Average health index across all active store accounts.
+- **AI Executive Strategic Brief**: Dynamically synthesized briefing outlining store-wide health, retention risks, and actionable recommendations.
+- **Priority Operational Actions**: Direct 1-click execution cards:
+  - *Payment Recovery*: Creates an urgent task with order metadata to rescue gateway failures.
+  - *VIP Win-Back*: Launches the AI Copilot with customer context pre-loaded to generate bespoke re-engagement incentives.
+- **Distribution Analytics**: Visual breakdowns of RFM customer segments and churn risk cadence.
 
-### 4. Order Management
-- Search by order number, customer name, or email.
-- Filter by fulfillment state (`completed`, `processing`, `pending`, `on-hold`, `cancelled`, `failed`).
-- Detailed line-item modal with SKU, unit price, quantity, tax, shipping, and payment gateway.
-- Gracefully handles guest checkouts without registered customer records.
+### 2. CRM Intelligence Engine: RFM Scoring & Churn Prediction
+- **Programmatic RFM Algorithm**:
+  - **Recency (R)**: Days since latest completed purchase.
+  - **Frequency (F)**: Cumulative completed order frequency.
+  - **Monetary (M)**: Total lifetime net revenue contributed.
+- **Dynamic Behavioral Segments**:
+  - `Champions`: Top spenders ($\ge$ ₹25,000) with high purchase recency ($\le 60$ days).
+  - `Loyal Customers`: Frequent buyers ($\ge 3$ orders) with sustained repeat cadence.
+  - `Potential Loyalists`: Recent buyers ($\le 45$ days) with moderate spend.
+  - `At Risk`: Substantial past spend ($\ge$ ₹10,000), but lapsed recency ($> 60$ days).
+  - `Hibernating`: Low frequency buyers inactive for $> 90$ days.
+  - `New Leads`: Registered contacts with 0 purchases.
+- **Churn Risk Classification**: Evaluates customer inactivity against typical order cycles (`Low`, `Medium`, `High`, `Critical`).
+- **Customer Health Score (0–100)**: Multi-variable score balancing order recency (+25 pts), repeat frequency (+20 pts), monetary volume (+15 pts), and penalties for failed checkouts or product return disputes (-15 pts).
+- **Storewide RFM API**: `GET /api/customers/rfm-summary` endpoint for instantaneous segment distribution and risk totals.
 
-### 5. Follow-up Task Management
-- Prioritized task queue (`High`, `Medium`, `Low`) with target due dates.
-- Filter by `Pending` or `Completed` status.
-- Interactive status toggling with instant database persistence (`completed_at` timestamps).
-- Clickable links jumping directly to the corresponding Customer 360 profile.
+### 3. Customer 360 Profile & Proactive Retention
+- **Comprehensive Profile**: Full contact records, lifecycle tags, billing address, and registered status.
+- **Individual KPIs**: Lifetime spent, valid order count, AOV benchmark, acquisition date, and days since last purchase.
+- **RFM Customer Health Scorecard**: Behavioral intelligence card showing Health Score progress bar, Churn Risk badge, and Recency age.
+- **Proactive Churn Danger Banner**: Automatically triggers for Critical/High risk VIPs (e.g., Tanya Kapoor: ₹64,500 spend, 135d inactive) with a 1-click **"Draft AI Win-Back Outreach"** button.
+- **Unified Activity Timeline**: Chronological aggregation of purchases, agent notes, and completed touchpoints.
+- **Internal Notes & Follow-Up Tasks**: Create and persist timestamped internal notes and prioritized tasks.
 
-### 6. WooCommerce Synchronization Center
-- **Honest Mode Tracking**: Clearly distinguishes seeded **Demo Mode** from **Live WooCommerce Store**.
-- **REST API v3 Integration**: Uses `httpx` to communicate with WooCommerce REST endpoints (`/wp-json/wc/v3/`).
-- **Connection Test**: Diagnostic tool that performs live handshake tests and reports exact store versions.
-- **Duplicate-Safe Sync**: Upserts customers and orders by external WooCommerce IDs without overwriting CRM-specific notes or tasks.
-- **Audit History**: Complete log of sync attempts, timestamps, records synced, and failure reasons.
+### 4. Failed & Pending Payment Recovery Hub in Orders
+- **Payment Attention Filter**: Instant filter isolating orders requiring operational intervention (`failed`, `pending`, `on-hold`).
+- **Overdue Age Tracking**: Real-time age badges (e.g., *"2d overdue"*, *"Awaiting NEFT wire verification"*, *"UPI QR pending 36h"*).
+- **1-Click "Recover Payment" Action**: Automatically creates a prioritized follow-up task with customer and gateway context.
+- **Line-Item Inspector Modal**: SKU, unit price, quantity, tax, shipping, and payment gateway details.
+- **Guest Checkout Support**: Gracefully displays guest names and emails for orders without customer accounts.
 
-### 7. Agentic AI Copilot (LangGraph Orchestration)
-- **Stateful LangGraph Workflow**: Single agent with controlled backend tools:
+### 5. Privacy-First Local AI Copilot (LangGraph Orchestration)
+- **Zero Cloud Leakage / Local Execution**: Connects to **Ollama running Qwen 2.5 (7B)** on `http://localhost:11434/v1`. Zero client PII or financial history leaves your local environment.
+- **Stateful LangGraph Workflow**: Single agent with controlled, typed backend database tools:
   - `identify_inactive_customers`
   - `identify_high_value_customers`
   - `search_customers`
   - `get_customer_details`
   - `get_customer_orders`
+  - `search_orders_tool`
   - `calculate_customer_metrics`
   - `get_revenue_analytics`
-  - `create_followup_task`
+  - `create_followup_task` (with duplicate task detection guard)
   - `add_customer_note`
   - `update_task_status`
-- **Human-in-the-Loop Safety**: Sensitive bulk actions (such as generating follow-up tasks for multiple inactive accounts) trigger an **Action Approval Card** requiring user confirmation before committing changes to SQLite.
-- **Genuine Tool Execution Status**: Displays live agent tool steps (`calling`, `completed`, `requires_approval`, `failed`).
-- **Dual Operating Modes**:
-  - **Live LLM Mode**: Uses configured API model (`OpenAI`, `Groq`, `OpenRouter`, `Ollama`) via LangChain / LangGraph.
-  - **Offline Structured Agent Mode**: When no external API key is provided, executes real CRM database queries and approval flows transparently without pretending mock text is LLM-generated.
+- **Human-in-the-Loop Safety**: Sensitive bulk actions trigger an interactive **Action Approval Card** requiring operator confirmation before committing records to SQLite.
+- **Multi-Provider Fallback**: Seamlessly supports `ollama`, `groq`, `openai`, `openrouter`, or offline structured agent mode.
+
+### 6. WooCommerce Synchronization Center
+- **Honest Mode Tracking**: Clearly distinguishes seeded **Demo Mode** from **Live WooCommerce Store**.
+- **REST API v3 Integration**: Communicates with WooCommerce endpoints (`/wp-json/wc/v3/`) via `httpx`.
+- **Diagnostic Connection Test**: Performs live handshake tests and reports exact store versions.
+- **Duplicate-Safe Sync**: Upserts customers and orders by external WooCommerce IDs without overwriting CRM notes or tasks.
+- **1-Click Demo Reset**: `POST /api/sync/reset-demo` endpoint to reset and replenish the rich edge-case seed dataset anytime.
 
 ---
 
@@ -79,116 +108,91 @@ Built for the Kilowott Software Engineering Challenge.
 | Layer | Technologies |
 |---|---|
 | **Frontend** | React 19, Vite, Tailwind CSS v4, React Router v7, Recharts, Lucide React, Axios |
-| **Backend** | Python 3.10+, FastAPI, SQLAlchemy, SQLite, Pydantic v2, httpx |
-| **Agentic AI** | LangGraph, LangChain Core, LangChain OpenAI |
+| **Backend** | Python 3.10+, FastAPI, SQLAlchemy, SQLite (`crm.db`), Pydantic v2, httpx |
+| **Agentic AI** | LangGraph, LangChain Core, LangChain OpenAI, Ollama (Local `qwen2.5:7b`) |
 | **Integration** | WooCommerce REST API v3 |
+| **Testing** | Standalone automated 5-phase test suite (`backend/test_features.py`) |
 
 ---
 
-## 💻 Quick Start & Setup (Windows)
+## 💻 Quick Start & Launch (Windows)
 
 ### Prerequisites
 - Python 3.10 or higher
 - Node.js 18 or higher (v24 tested)
 - npm 9 or higher
+- *(Optional)* [Ollama](https://ollama.com/) with `ollama run qwen2.5:7b` for local private LLM reasoning.
 
 ---
 
-### Step 1: Clone & Inspect Workspace
-```powershell
-cd c:\Users\remed\Desktop\Kilowott
-```
-
----
-
-### Step 2: Backend Setup & Launch
+### Step 1: Backend Setup & Launch
 
 1. Open PowerShell in `backend`:
 ```powershell
 cd c:\Users\remed\Desktop\Kilowott\backend
 ```
 
-2. Create and activate a Python virtual environment:
+2. Activate the Python virtual environment:
 ```powershell
-python -m venv venv
 .\venv\Scripts\activate
 ```
 
-3. Install backend dependencies:
-```powershell
-pip install -r requirements.txt
+3. Configure environment variables in `backend/.env`:
+```ini
+DATABASE_URL=sqlite:///./crm.db
+
+# Local Ollama Configuration (Default Privacy Mode)
+LLM_PROVIDER=ollama
+LLM_MODEL=qwen2.5:7b
+LLM_API_KEY=ollama
+LLM_BASE_URL=http://localhost:11434/v1
+
+# Optional Live WooCommerce REST API Credentials
+WOOCOMMERCE_STORE_URL=
+WOOCOMMERCE_CONSUMER_KEY=
+WOOCOMMERCE_CONSUMER_SECRET=
 ```
 
-4. Configure environment variables:
-```powershell
-copy .env.example .env
-```
-*(Optional: Open `backend/.env` to configure `LLM_API_KEY` or `WOOCOMMERCE_*` credentials. If left empty, the CRM runs in Demo Mode with full tool functionality).*
-
-5. Start the FastAPI backend server:
+4. Start the FastAPI backend server:
 ```powershell
 uvicorn app.main:app --host 127.0.0.1 --port 8000 --reload
 ```
-Backend API will be running at: `http://127.0.0.1:8000`  
-Interactive Swagger Docs at: `http://127.0.0.1:8000/docs`
+- Backend API running at: `http://127.0.0.1:8000`  
+- Interactive Swagger Docs: `http://127.0.0.1:8000/docs`
 
 ---
 
-### Step 3: Frontend Setup & Launch
+### Step 2: Frontend Setup & Launch
 
 1. Open a new PowerShell window in `frontend`:
 ```powershell
 cd c:\Users\remed\Desktop\Kilowott\frontend
 ```
 
-2. Install dependencies:
+2. Start the Vite development server:
 ```powershell
-npm install
+npm run dev
 ```
-
-3. Start the Vite development server:
-```powershell
-npm run dev -- --host 127.0.0.1 --port 5173
-```
-Frontend application will be accessible at: `http://127.0.0.1:5173/`
+- Frontend application running at: `http://localhost:5173/`
 
 ---
 
-## 🧪 Testing the AI Copilot & Agentic Workflow
+## 🧪 Automated Feature Verification Test Suite
 
-1. Open `http://127.0.0.1:5173/` in your browser.
-2. Click the floating **"Ask AI Copilot"** button in the bottom-right corner.
-3. Test the challenge benchmark prompt:
-   > *"Find customers who haven't purchased in 60 days but have spent more than ₹5,000. Create follow-up tasks for them."*
-4. **Observe the Agentic Steps**:
-   - The agent calls `identify_inactive_customers` with `min_days=60` and `min_spent=5000`.
-   - Returns matching customers (Priya Patel, Rohan Mehta, Vikram Desai) with exact order evidence.
-   - Intercepts the bulk task creation and renders the **Action Approval Card**.
-5. Click **"Approve & Execute"** on the card.
-6. The agent creates the 3 tasks in SQLite and reports success.
-7. Open **"Follow-up Tasks"** in the sidebar to verify the tasks are live in the database!
+A standalone test suite validates all 5 phases directly in-memory against FastAPI:
 
----
-
-## ⚙️ Environment Variables Reference (`backend/.env`)
-
-```ini
-# Application
-DATABASE_URL=sqlite:///./crm.db
-
-# WooCommerce REST API v3 Integration (Optional)
-WOOCOMMERCE_STORE_URL=https://your-store.com
-WOOCOMMERCE_CONSUMER_KEY=ck_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-WOOCOMMERCE_CONSUMER_SECRET=cs_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-WOOCOMMERCE_TIMEOUT=15.0
-
-# LLM & Agentic AI Configuration
-# Options: openai, groq, openrouter, ollama
-LLM_PROVIDER=openai
-LLM_MODEL=gpt-4o-mini
-LLM_API_KEY=your_api_key_here
-LLM_BASE_URL=
+```powershell
+cd c:\Users\remed\Desktop\Kilowott\backend
+.\venv\Scripts\python.exe test_features.py
 ```
+
+### Verified Capabilities:
+- ✅ **Phase 1**: Edge-case seed data replenishment (`POST /api/sync/reset-demo`), failed checkouts, stalled wires, disputed returns.
+- ✅ **Phase 2**: RFM algorithm (Lead, Champions, At-Risk), Churn Risk (Critical), Health Score (0-100), and `GET /api/customers/rfm-summary`.
+- ✅ **Phase 3**: Customer 360 RFM scorecard, timeline aggregation, and internal note persistence.
+- ✅ **Phase 4**: Payment Attention filter isolation and 1-click recovery task creation.
+- ✅ **Phase 5**: AI Store Insights (`GET /api/ai/insights`), revenue at risk telemetry, executive brief, and priority actions.
+- ✅ **AI Copilot**: LangGraph tool reasoning, human-in-the-loop action approval card intercept, and safety rejection flow.
 
 ---
 
@@ -200,43 +204,45 @@ Kilowott/
 │   ├── app/
 │   │   ├── agent/
 │   │   │   ├── graph.py          # LangGraph workflow, state, conditional tool routing & approvals
-│   │   │   ├── llm_factory.py    # Configurable LLM provider factory (OpenAI, Groq, Ollama)
-│   │   │   └── tools.py          # Validated database tools with safety checks
+│   │   │   ├── llm_factory.py    # Configurable LLM provider factory (Ollama, Groq, OpenAI)
+│   │   │   └── tools.py          # 10 database tools with duplicate guards & safety checks
 │   │   ├── routers/
-│   │   │   ├── ai.py             # /api/ai/chat, /api/ai/approve, /api/ai/config-status
-│   │   │   ├── customers.py      # /api/customers, Customer 360, CSV export
+│   │   │   ├── ai.py             # /api/ai/chat, /api/ai/approve, /api/ai/insights
+│   │   │   ├── customers.py      # /api/customers, Customer 360, /rfm-summary, CSV export
 │   │   │   ├── dashboard.py      # /api/dashboard/summary, revenue trends
-│   │   │   ├── orders.py         # /api/orders, line items, search
-│   │   │   ├── sync.py           # /api/sync/test-connection, /api/sync/run, /api/sync/history
-│   │   │   └── tasks.py          # /api/tasks, task creation & status toggle
+│   │   │   ├── orders.py         # /api/orders, line items, search & status filters
+│   │   │   ├── sync.py           # /api/sync/run, /api/sync/reset-demo, /api/sync/history
+│   │   │   └── tasks.py          # /api/tasks, task creation & status lifecycle
 │   │   ├── services/
-│   │   │   ├── crm_service.py    # Analytics, segmentation engine, timeline builder
+│   │   │   ├── crm_service.py    # RFM scoring, churn risk engine, health scores, insights synthesis
 │   │   │   └── woocommerce.py    # WooCommerce REST API v3 client & duplicate-safe sync
-│   │   ├── config.py             # Settings using Pydantic
+│   │   ├── config.py             # App settings using Pydantic
 │   │   ├── database.py           # SQLAlchemy engine & session factory
 │   │   ├── models.py             # Database models (Customer, Order, Note, Task, SyncLog)
-│   │   ├── schemas.py            # Pydantic request/response schemas
-│   │   ├── seed_data.py          # Realistic seeded WooCommerce dataset
+│   │   ├── schemas.py            # Pydantic schemas (RFM, Customer, Order, Insights, Chat)
+│   │   ├── seed_data.py          # Rich edge-case dataset (16 customers, 27+ orders)
 │   │   └── main.py               # FastAPI entrypoint, CORS & lifespan seeding
+│   ├── test_features.py          # Automated 5-phase test suite
 │   ├── requirements.txt
 │   ├── .env.example
 │   └── .env
 ├── frontend/
 │   ├── src/
 │   │   ├── api/
-│   │   │   └── client.js         # Axios API client
+│   │   │   └── client.js         # Axios API client with extended AI timeouts
 │   │   ├── components/
 │   │   │   ├── CopilotDrawer.jsx # Slide-over AI Copilot with tool status & approval cards
 │   │   │   ├── Header.jsx        # Navigation header & quick triggers
 │   │   │   ├── MetricCard.jsx    # KPI Metric display cards
-│   │   │   ├── Sidebar.jsx       # Persistent CRM navigation
-│   │   │   └── StatusBadge.jsx   # Segment, order status, and priority badges
+│   │   │   ├── Sidebar.jsx       # Persistent CRM navigation including Store Insights
+│   │   │   └── StatusBadge.jsx   # RFM badges, churn risk pills, health score progress bars
 │   │   ├── pages/
 │   │   │   ├── CopilotPage.jsx   # Dedicated AI Copilot Studio
-│   │   │   ├── CustomerDetail.jsx# Customer 360 profile with unified timeline
-│   │   │   ├── Customers.jsx     # Customers table, filters & CSV export
+│   │   │   ├── CustomerDetail.jsx# Customer 360 profile with RFM scorecard & win-back banner
+│   │   │   ├── Customers.jsx     # Customers table with RFM filter chips & health score columns
 │   │   │   ├── Dashboard.jsx     # Overview dashboard with Recharts analytics
-│   │   │   ├── Orders.jsx        # Orders directory & line items modal
+│   │   │   ├── Insights.jsx      # AI Store Insights & Churn Radar executive dashboard
+│   │   │   ├── Orders.jsx        # Orders directory with Payment Attention Hub & recovery
 │   │   │   ├── SyncCenter.jsx    # WooCommerce synchronization center
 │   │   │   └── Tasks.jsx         # Follow-up task management queue
 │   │   ├── App.jsx               # React Router root & layout
@@ -252,8 +258,9 @@ Kilowott/
 
 ## 🛡️ Tool Safety & Execution Guarantees
 
-1. **No Arbitrary SQL**: The AI Copilot is strictly restricted to defined Python tools with explicit typed arguments.
-2. **Entity Validation**: Every target customer is checked in the database before task creation.
-3. **Duplicate Prevention**: Re-running follow-up task creation checks for existing pending tasks with identical titles to prevent duplicate spam.
-4. **Human-in-the-Loop Confirmation**: Sensitive bulk task actions must be approved by the user via interactive approval cards.
-5. **Data Preservation**: Synchronizing with external WooCommerce stores preserves CRM notes and tasks.
+1. **Local Model Privacy**: All customer PII and purchase amounts remain on-premise when using Ollama (`qwen2.5:7b`).
+2. **No Arbitrary SQL**: The AI Copilot is strictly restricted to defined Python tools with explicit typed arguments.
+3. **Entity Validation**: Every target customer is checked in the database before task creation.
+4. **Duplicate Prevention**: Re-running follow-up task creation checks for existing pending tasks with identical titles to prevent duplicate spam.
+5. **Human-in-the-Loop Confirmation**: Sensitive bulk task actions must be confirmed by the operator via interactive approval cards before changes commit to the database.
+6. **Data Preservation**: Synchronizing with external WooCommerce stores preserves CRM notes, RFM tags, and tasks.
