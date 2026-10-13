@@ -8,6 +8,15 @@ Built for the Kilowott Software Engineering Challenge.
 
 ---
 
+## 📹 Demo Videos
+
+| Video | Description |
+|-------|-------------|
+| [▶️ Initial Implementation Plan](https://drive.google.com/file/d/12BMO8aizLmawo4Ty0SbXlzGxqOrMMrAa/view?usp=sharing) | Project planning, research, local LLM architecture decisions, and feature roadmap |
+| [▶️ Final Project Demo](https://drive.google.com/file/d/187PBuAXzSOv0VauCKHwT32R9H_7sWMdB/view?usp=sharing) | Full walkthrough of the completed CRM with all 5 phases in action |
+
+---
+
 ## 🚀 Key Features Across the 5-Phase Architecture
 
 ```
