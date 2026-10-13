@@ -289,6 +289,94 @@ class CRMWorkflowManager:
 
             # Final response from model
             final_ai_msg = llm_with_tools.invoke(messages)
+
+            # Check if second turn called create_followup_task
+            if final_ai_msg.tool_calls:
+                task_calls_2 = [tc for tc in final_ai_msg.tool_calls if tc["name"] == "create_followup_task"]
+                if task_calls_2:
+                    token = str(uuid.uuid4())[:8]
+                    pending_action = {
+                        "action_type": "bulk_create_tasks",
+                        "description": f"Approval required to create {len(task_calls_2)} follow-up task(s).",
+                        "payload": {
+                            "tasks": [
+                                {
+                                    "customer_id": tc["args"].get("customer_id"),
+                                    "title": tc["args"].get("title"),
+                                    "description": tc["args"].get("description", ""),
+                                    "priority": tc["args"].get("priority", "medium")
+                                }
+                                for tc in task_calls_2
+                            ]
+                        },
+                        "action_token": token
+                    }
+                    requires_approval = True
+                    events.append({
+                        "tool_name": "create_followup_task",
+                        "status": "requires_approval",
+                        "message": f"Prepared {len(task_calls_2)} follow-up tasks. Awaiting user approval.",
+                        "input_args": {"tasks_count": len(task_calls_2)}
+                    })
+                    return {
+                        "reply": f"I have prepared {len(task_calls_2)} follow-up task(s). Please review the details below and confirm to proceed.",
+                        "events": events,
+                        "requires_approval": True,
+                        "pending_action": pending_action,
+                        "llm_configured": True,
+                        "provider": settings.LLM_PROVIDER,
+                        "model": settings.LLM_MODEL
+                    }
+
+            # If user explicitly requested task creation and matching customers were found
+            if is_task_creation_requested and any(ev.get("tool_name") in ("identify_inactive_customers", "identify_high_value_customers", "search_customers") for ev in events):
+                matching_customers = []
+                for ev in events:
+                    out = ev.get("output_result")
+                    if isinstance(out, list) and len(out) > 0 and isinstance(out[0], dict) and ("customer_id" in out[0] or "id" in out[0]):
+                        matching_customers = out
+                        break
+
+                if matching_customers:
+                    token = str(uuid.uuid4())[:8]
+                    tasks_to_create = []
+                    for c in matching_customers:
+                        cid = c.get("customer_id") or c.get("id")
+                        cname = c.get("name") or f"Customer #{cid}"
+                        spent = c.get("total_spent", 0.0)
+                        days = c.get("days_inactive", 60)
+                        tasks_to_create.append({
+                            "customer_id": cid,
+                            "customer_name": cname,
+                            "title": f"Re-engage inactive VIP: {cname} (Spent ₹{spent:,.2f})",
+                            "description": f"Customer inactive for {days} days. Follow up with curated recommendations.",
+                            "priority": "high",
+                            "due_days": 2
+                        })
+
+                    pending_action = {
+                        "action_type": "bulk_create_tasks",
+                        "description": f"Create {len(tasks_to_create)} follow-up tasks for inactive accounts",
+                        "payload": {"tasks": tasks_to_create},
+                        "action_token": token
+                    }
+                    requires_approval = True
+                    events.append({
+                        "tool_name": "create_followup_task",
+                        "status": "requires_approval",
+                        "message": f"Prepared {len(tasks_to_create)} follow-up tasks. Awaiting user approval.",
+                        "input_args": {"tasks_count": len(tasks_to_create)}
+                    })
+                    return {
+                        "reply": final_ai_msg.content + f"\n\nI have prepared **{len(tasks_to_create)} follow-up tasks** for these customers. Please review and approve the action below to commit them to the database.",
+                        "events": events,
+                        "requires_approval": True,
+                        "pending_action": pending_action,
+                        "llm_configured": True,
+                        "provider": settings.LLM_PROVIDER,
+                        "model": settings.LLM_MODEL
+                    }
+
             return {
                 "reply": final_ai_msg.content,
                 "events": events,

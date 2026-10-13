@@ -2,12 +2,23 @@ import axios from 'axios';
 
 const API_BASE_URL = 'http://127.0.0.1:8000/api';
 
+// Standard API client (15s timeout for all normal endpoints)
 const api = axios.create({
   baseURL: API_BASE_URL,
   headers: {
     'Content-Type': 'application/json',
   },
   timeout: 15000,
+});
+
+// AI-specific client with extended timeout for local LLM responses
+// Local models (Ollama/qwen2.5) can take 30-120s depending on query complexity
+const aiApi = axios.create({
+  baseURL: API_BASE_URL,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+  timeout: 180000, // 3 minutes
 });
 
 // Dashboard
@@ -39,16 +50,16 @@ export const testWooConnection = () => api.post('/sync/test-connection').then(re
 export const runSync = (mode = 'auto') => api.post(`/sync/run?mode=${mode}`).then(res => res.data);
 export const getSyncHistory = () => api.get('/sync/history').then(res => res.data);
 
-// AI Copilot
-export const sendChatMessage = (message, customerContextId = null, chatHistory = []) => 
-  api.post('/ai/chat', {
+// AI Copilot — uses aiApi with extended timeout for local LLM
+export const sendChatMessage = (message, customerContextId = null, chatHistory = []) =>
+  aiApi.post('/ai/chat', {
     message,
     customer_context_id: customerContextId,
     chat_history: chatHistory
   }).then(res => res.data);
 
 export const approveAction = (actionToken, approved, payload) =>
-  api.post('/ai/approve', {
+  aiApi.post('/ai/approve', {
     action_token: actionToken,
     approved,
     payload

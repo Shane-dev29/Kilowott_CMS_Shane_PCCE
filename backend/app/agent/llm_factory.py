@@ -26,7 +26,7 @@ def get_llm() -> Optional[BaseChatModel]:
 
         elif provider == "groq":
             groq_base_url = base_url or "https://api.groq.com/openai/v1"
-            groq_model = model if model != "gpt-4o-mini" else "llama-3.3-70b-versatile"
+            groq_model = model or "openai/gpt-oss-120b"
             return ChatOpenAI(api_key=api_key, model=groq_model, base_url=groq_base_url, temperature=0.1)
 
         elif provider == "openrouter":
